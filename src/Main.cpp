@@ -1,4 +1,4 @@
-#include "Parsing/Scanner.hpp"
+#include "Parsing/Parser.hpp"
 #include <fmt/core.h>
 
 int main() {
@@ -7,10 +7,7 @@ int main() {
         return 0;
     }
     )";
-    auto sc = pl::Scanner::FromString(testSrc);
-
-    while (sc.IsOpen()) {
-        auto t = sc.GetToken();
-        fmt::println("{}", t.ToString());
-    }
+    
+    auto parser = pl::FileParser::FromString(testSrc);
+    
 }

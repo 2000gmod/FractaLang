@@ -136,33 +136,33 @@ Scanner Scanner::FromString(std::string_view str) {
 }
 
 Scanner::Scanner(const std::filesystem::path& filepath) {
-    HandleValid = std::filesystem::exists(filepath);
-    if(HandleValid) {
+    handleValid = std::filesystem::exists(filepath);
+    if(handleValid) {
         auto ptr = std::make_shared<std::ifstream>();
         ptr->open(filepath.string());
-        InputStream = ptr;
+        inputStream = ptr;
     }
 }
 
 Scanner::Scanner(std::string_view str) {
-    HandleValid = !str.empty();
+    handleValid = !str.empty();
 
-    if (HandleValid) {
+    if (handleValid) {
         auto ptr = std::make_shared<std::stringstream>();
         ptr->str(std::string(str));
-        InputStream = ptr;
+        inputStream = ptr;
     }
 }
 
 Token Scanner::GetToken() {
     Token out;
 
-    if (!HandleValid) {
-        out.Type = TokenType::Error;
+    if (!handleValid) {
+        out.type = TokenType::Error;
     }
-    else if (InputStream->eof()) {
-        HandleValid = false;
-        out.Type = TokenType::EoF;
+    else if (inputStream->eof()) {
+        handleValid = false;
+        out.type = TokenType::EoF;
     }
     else {
         ScanToken(out);
@@ -172,25 +172,25 @@ Token Scanner::GetToken() {
 }
 
 char Scanner::Advance() {
-    char c = InputStream->get();
-    if (InputStream->eof()) {
-        HandleValid = false;
+    char c = inputStream->get();
+    if (inputStream->eof()) {
+        handleValid = false;
         return '\0';
     }
     return c;
 }
 
 char Scanner::Peek() {
-    if (InputStream->eof()) {
-        HandleValid = false;
+    if (inputStream->eof()) {
+        handleValid = false;
         return '\0';
     }
-    return InputStream->peek();
+    return inputStream->peek();
 }
 
 char Scanner::PeekNext() {
     char c = Advance();
-    InputStream->unget();
+    inputStream->unget();
     return c;
 }
 
@@ -204,8 +204,8 @@ bool Scanner::Match(char c) {
 
 void Scanner::ScanToken(Token& out) {
     char c = Advance();
-    if (InputStream->eof()) {
-        out.Type = TokenType::EoF;
+    if (inputStream->eof()) {
+        out.type = TokenType::EoF;
         return;
     }
 
@@ -215,10 +215,10 @@ void Scanner::ScanToken(Token& out) {
             switch (c) {
                 case '#':
                     skipFlag = true;
-                    while (c != '\n' && HandleValid) c = Advance();
+                    while (c != '\n' && handleValid) c = Advance();
                     continue;
                 case '\n':
-                    CurrentLine++;
+                    currentLine++;
                 case ' ':
                 case '\t':
                 case '\r':
@@ -232,8 +232,8 @@ void Scanner::ScanToken(Token& out) {
         } while (skipFlag);
     }
 
-    if (InputStream->eof()) {
-        out.Type = TokenType::EoF;
+    if (inputStream->eof()) {
+        out.type = TokenType::EoF;
         return;
     }
 
@@ -250,8 +250,8 @@ void Scanner::ScanToken(Token& out) {
         }
         
         else if (res == MatchResult::FullMatch) {
-            out.Type = Punctuations.at(proc);
-            out.LineNumber = CurrentLine;
+            out.type = Punctuations.at(proc);
+            out.lineNumber = currentLine;
             return;
         }
 
@@ -262,12 +262,12 @@ void Scanner::ScanToken(Token& out) {
             switch (res) {
                 case MatchResult::None: {
                     if (!Punctuations.contains(biggestMatch)) {
-                        out.LineNumber = CurrentLine;
-                        out.Type = TokenType::Error;
+                        out.lineNumber = currentLine;
+                        out.type = TokenType::Error;
                         return;
                     }
-                    out.Type = Punctuations.at(biggestMatch);
-                    out.LineNumber = CurrentLine;
+                    out.type = Punctuations.at(biggestMatch);
+                    out.lineNumber = currentLine;
                     return;
                 }
                 case MatchResult::Partial: {
@@ -278,8 +278,8 @@ void Scanner::ScanToken(Token& out) {
                     continue;
                 }
                 case MatchResult::FullMatch: {
-                    out.Type = Punctuations.at(proc);
-                    out.LineNumber = CurrentLine;
+                    out.type = Punctuations.at(proc);
+                    out.lineNumber = currentLine;
                     return;
                 }
             }
@@ -294,24 +294,24 @@ void Scanner::ScanToken(Token& out) {
 }
 
 void Scanner::ScanKeywordOrIdentifier(Token& out, char initial) {
-    out.LineNumber = CurrentLine;
+    out.lineNumber = currentLine;
     std::string proc { initial };
 
     while (IsAlphaNum(Peek())) proc += Advance();
 
     if (Keywords.contains(proc)) {
-        out.Type = Keywords.at(proc);
+        out.type = Keywords.at(proc);
         return;
     }
     
     
-    out.Type = TokenType::Identifier;
-    out.IdentName = proc;
+    out.type = TokenType::Identifier;
+    out.identName = proc;
     return;
 }
 
 void Scanner::ScanNumberLiteral(Token& out, char initial) {
-    out.LineNumber = CurrentLine;
+    out.lineNumber = currentLine;
     std::string proc { initial };
 
     while (IsNumeric(Peek())) proc += Advance();
@@ -321,29 +321,29 @@ void Scanner::ScanNumberLiteral(Token& out, char initial) {
         proc += '.';
         while (IsNumeric(Peek())) proc += Advance();
 
-        out.Type = TokenType::DoubleLiteral;
+        out.type = TokenType::DoubleLiteral;
         auto val = std::stod(proc);
-        out.LiteralValue = val;
+        out.literalValue = val;
         return;
     }
 
     
     try {
-        out.Type = TokenType::IntLiteral;
+        out.type = TokenType::IntLiteral;
         auto val = std::stoll(proc);
-        out.LiteralValue = val;
+        out.literalValue = val;
     }
     catch (std::out_of_range&) {
-        out.Type = TokenType::Error;
-        ScannerError(fmt::format("(at line {}) Integer literal out of max range: ({})", CurrentLine, proc));
+        out.type = TokenType::Error;
+        ScannerError(fmt::format("(at line {}) Integer literal out of max range: ({})", currentLine, proc));
         return;
     }
     return;
 }
 
 void Scanner::ScanStringLiteral(Token& out) {
-    out.LineNumber = CurrentLine;
-    auto startLine = CurrentLine;
+    out.lineNumber = currentLine;
+    auto startLine = currentLine;
 
     char previous = '"';
 
@@ -351,7 +351,7 @@ void Scanner::ScanStringLiteral(Token& out) {
     std::string proc;
     bool terminated = false;
 
-    while (HandleValid) {
+    while (handleValid) {
         c = Advance();
         if (c == '"' && previous != '\\') {
             terminated = true;
@@ -382,15 +382,15 @@ void Scanner::ScanStringLiteral(Token& out) {
             continue;
         }
         if (c == '\n') {
-            CurrentLine++;
+            currentLine++;
             continue;
         }
         else proc += c;
         previous = c;
     }
     
-    out.Type = terminated ? TokenType::StringLiteral : TokenType::Error;
-    if (terminated) out.LiteralValue = proc;
+    out.type = terminated ? TokenType::StringLiteral : TokenType::Error;
+    if (terminated) out.literalValue = proc;
     else {
         ScannerError(fmt::format("Unterminated string literal at line {}", startLine));
     }

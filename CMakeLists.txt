@@ -36,6 +36,7 @@ set(UtilsSources
 set(ParsingSources
     src/Parsing/Scanner.cpp
     src/Parsing/Token.cpp
+    src/Parsing/Parser.cpp
 )
 
 
@@ -46,13 +47,13 @@ set(SOURCES
 )
 
 
-add_executable(fracta ${SOURCES})
+add_executable(fractac ${SOURCES})
 
 llvm_map_components_to_libnames(LLVM_LIBS
     core
     support
 )
 
-target_link_libraries(fracta PRIVATE ${LLVM_LIBS})
-target_link_libraries(fracta PRIVATE fmt::fmt)
-target_link_libraries(fracta PRIVATE magic_enum)
+target_link_libraries(fractac PRIVATE ${LLVM_LIBS})
+target_link_libraries(fractac PRIVATE fmt::fmt)
+target_link_libraries(fractac PRIVATE magic_enum)

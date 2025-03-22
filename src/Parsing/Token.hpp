@@ -49,9 +49,9 @@ namespace pl {
     };
 
     struct Token {
-        std::string IdentName;
-        int LineNumber;
-        TokenType Type;
+        std::string identName;
+        int lineNumber;
+        TokenType type;
 
         std::variant<
             std::monostate,
@@ -67,7 +67,7 @@ namespace pl {
             float,
             double,
             std::string
-        > LiteralValue = std::monostate();
+        > literalValue = std::monostate();
 
         std::string ToString() const;
     };

@@ -12,14 +12,14 @@ namespace pl {
 
     class Scanner {
         private:
-            bool HandleValid = false;
-            std::shared_ptr<std::istream> InputStream;
-            int CurrentLine = 0;
+            bool handleValid = false;
+            std::shared_ptr<std::istream> inputStream;
+            int currentLine = 0;
         public:
             ~Scanner() = default;
             static Scanner FromFile(const std::filesystem::path& filepath);
             static Scanner FromString(std::string_view str);
-            bool IsOpen() const { return HandleValid; }
+            bool IsOpen() const { return handleValid; }
 
         private:
             explicit Scanner(const std::filesystem::path& filepath);
