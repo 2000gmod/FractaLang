@@ -49,6 +49,7 @@ static const std::unordered_map<std::string, TokenType> Punctuations = {
     {".", TokenType::Dot},
     {":", TokenType::Colon},
     {"::", TokenType::DoubleColon},
+    {",", TokenType::Comma},
     {";", TokenType::SemiColon},
 };
 

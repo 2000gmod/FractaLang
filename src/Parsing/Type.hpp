@@ -15,5 +15,9 @@ namespace pl {
 
     struct NamedType : public TypeBase {
         Token name;
+
+        NamedType(const Token& name) : name(name) { }
     };
+
+    using NamedTypeSP = std::shared_ptr<NamedType>;
 }

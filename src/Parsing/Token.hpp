@@ -41,6 +41,7 @@ namespace pl {
         Dot,
         Colon,
         DoubleColon,
+        Comma,
 
         SemiColon,
 

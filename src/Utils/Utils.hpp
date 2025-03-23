@@ -8,6 +8,6 @@ namespace pl {
 
     template <class T, class... Args>
     std::shared_ptr<T> MakeSP(Args&&... args) {
-        return std::make_shared<T>(std::forward(args)...);
+        return std::make_shared<T>(args...);
     }
 }

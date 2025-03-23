@@ -20,14 +20,31 @@ namespace pl {
             TypeSP type;
             Token name;
         };
+        using ArgList = std::vector<ArgPair>;
 
         Token name;
+        ArgList args;
         TypeSP returnType;
-        std::vector<ArgPair> args;
         StmtSP body;
+
+        FuncDeclStmt(const Token& name, const ArgList& args, const TypeSP& rType, const StmtSP& body) 
+            : name(name),
+            args(args),
+            returnType(rType),
+            body(body)
+            { }
     };
 
     struct ReturnStmt : public StmtBase {
         ExprSP value;
+
+        ReturnStmt(const ExprSP& value) : value(value) { }
+    };
+
+
+    struct BlockStmt : public StmtBase {
+        std::vector<StmtSP> body;
+
+        BlockStmt(const std::vector<StmtSP>& body) : body(body) { }
     };
 }

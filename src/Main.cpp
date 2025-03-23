@@ -3,11 +3,11 @@
 
 int main() {
     auto testSrc = R"(
-    func main() {
-        return 0;
+    func main() void {
+        return;
     }
     )";
     
-    auto parser = pl::FileParser::FromString(testSrc);
-    
+    auto parser = pl::SourceParser::FromString(testSrc);
+    auto statements = parser.Parse();
 }
