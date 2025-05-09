@@ -4,7 +4,8 @@
 int main() {
     auto testSrc = R"(
     func main() void {
-        return;
+        return 0.0;
+        return "aaa";
     }
     )";
     

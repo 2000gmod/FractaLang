@@ -1,10 +1,11 @@
 #pragma once
 
+#include "ASTNode.hpp"
 #include "Token.hpp"
 #include <memory>
 
 namespace pl {
-    struct ExprBase {
+    struct ExprBase : public ASTNode {
         virtual ~ExprBase() = 0;
     };
 

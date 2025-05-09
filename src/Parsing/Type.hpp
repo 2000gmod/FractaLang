@@ -1,11 +1,12 @@
 #pragma once
 
+#include "ASTNode.hpp"
 #include "Token.hpp"
 #include <memory>
 
 
 namespace pl {
-    struct TypeBase {
+    struct TypeBase : public ASTNode {
         virtual ~TypeBase() = 0;
     };
 

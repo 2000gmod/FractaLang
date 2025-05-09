@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ASTNode.hpp"
 #include "Token.hpp"
 #include "Type.hpp"
 #include "Expression.hpp"
@@ -7,7 +8,7 @@
 #include <vector>
 
 namespace pl {
-    struct StmtBase {
+    struct StmtBase : public ASTNode {
         virtual ~StmtBase() = 0;
     };
 

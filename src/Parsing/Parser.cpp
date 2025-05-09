@@ -87,7 +87,7 @@ bool SourceParser::Match(const std::initializer_list<TokenType>& types) {
 
 SourceParser::ParseError SourceParser::Error(Token& tok, std::string_view msg) {
     auto tokenName = magic_enum::enum_name(tok.type);
-    auto message = fmt::format("[Fatal parsing error at line {}, token: {}]: \n{}", tok.lineNumber, tokenName, msg);
+    auto message = fmt::format("Fatal parsing error at line {}, token: ({}): \n{}", tok.lineNumber, tokenName, msg);
 
     return { message };
 }
@@ -146,7 +146,10 @@ StmtSP SourceParser::SReturn() {
     ExprSP value;
 
     if (Match(TokenType::SemiColon)) value = nullptr;
-    else value = Expression();
+    else {
+        value = Expression();
+        Consume(TokenType::SemiColon, "Expected semicolon.");
+    }
 
     return MakeSP<ReturnStmt>(value);
 }
