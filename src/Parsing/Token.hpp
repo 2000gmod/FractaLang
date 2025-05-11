@@ -51,8 +51,8 @@ namespace pl {
 
     struct Token {
         std::string identName;
-        int lineNumber;
-        TokenType type;
+        int lineNumber {};
+        TokenType type = TokenType::None;
 
         std::variant<
             std::monostate,
@@ -79,12 +79,7 @@ namespace pl {
             literalValue(std::move(other.literalValue))
         { }
 
-        Token(const Token& other) :
-            identName(other.identName),
-            lineNumber(other.lineNumber),
-            type(other.type),
-            literalValue(other.literalValue)
-        { }
+        Token(const Token& other) = default;
 
         Token() = default;
 

@@ -7,8 +7,12 @@
 #include <vector>
 
 namespace pl {
+    struct TypeBase;
+    using TypeSP = std::shared_ptr<TypeBase>;
+
     struct ExprBase : public ASTNode {
         ~ExprBase() override = 0;
+        TypeSP exprType;
     };
 
     inline ExprBase::~ExprBase() = default;
