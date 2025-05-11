@@ -1,4 +1,5 @@
 #include "Parser.hpp"
+#include "ASTNode.hpp"
 #include "Expression.hpp"
 #include "Statement.hpp"
 #include "Token.hpp"
@@ -58,7 +59,7 @@ SourceParser SourceParser::FromScanner(Scanner& scanner) {
     return parser;
 }
 
-SList SourceParser::Parse() {
+FileSourceNodeSP SourceParser::Parse() {
     SList statements;
     while (!IsAtEnd()) {
         try {
@@ -68,8 +69,8 @@ SList SourceParser::Parse() {
             ReportError(err.msg);
         }
     }
-
-    return statements;
+    auto filenode = MakeSP<FileSourceNode>(statements);
+    return filenode;
 }
 
 bool SourceParser::IsAtEnd() {

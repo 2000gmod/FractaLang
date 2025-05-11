@@ -1,8 +1,9 @@
 #pragma once
 #include <typeindex>
 #include <unordered_map>
+#include <concepts>
 
-#include "Statement.hpp"
+#include "ASTNode.hpp"
 
 namespace pl {
     class SemanticAnalyzer {
@@ -10,9 +11,12 @@ namespace pl {
             SemanticAnalyzer();
             ~SemanticAnalyzer();
 
-            void Analyze(const std::vector<StmtSP>& program);
+            void Analyze(const std::vector<FileSourceNodeSP>& files);
+
         private:
-            struct SemanticContext { };
+            struct SemanticContext {
+                
+            };
 
             class IAnalyzer {
                 public:
@@ -21,6 +25,7 @@ namespace pl {
             };
 
             template <class T>
+            requires std::derived_from<T, ASTNode>
             class AnalyzerBase : public IAnalyzer {
                 public:
                     void Analyze(SemanticAnalyzer &analyzer, SemanticContext &context, const ASTNodeSP &node) final {
@@ -29,9 +34,16 @@ namespace pl {
                         RunAnalysis(analyzer, context, real);
                     }
                 protected:
-                    virtual void RunAnalysis(SemanticAnalyzer &analyzer, SemanticContext &context, const ASTNodeSP &node) = 0;
+                    virtual void RunAnalysis(SemanticAnalyzer &analyzer, SemanticContext &context, const std::shared_ptr<T> &node) = 0;
             };
 
             std::unordered_map<std::type_index, std::vector<std::unique_ptr<IAnalyzer>>> analyzerRegistry;
+
+            template <class NodeType, class PassType, class... Args>
+            void Register(Args&& ...args) {
+                analyzerRegistry[typeid(NodeType)].push_back(MakeUP<PassType>(std::forward(args)...));
+            }
+
+            SemanticContext moduleContext;
     };
 }

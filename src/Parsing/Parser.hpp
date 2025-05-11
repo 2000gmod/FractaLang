@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ASTNode.hpp"
 #include "Expression.hpp"
 #include "Scanner.hpp"
 #include "Statement.hpp"
@@ -36,7 +37,7 @@ namespace pl {
 
             static SourceParser FromScanner(Scanner& scanner);
 
-            SList Parse();
+            FileSourceNodeSP Parse();
 
         private:
             bool IsAtEnd();
