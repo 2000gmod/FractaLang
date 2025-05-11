@@ -70,6 +70,28 @@ namespace pl {
             std::string
         > literalValue = std::monostate();
 
-        std::string ToString() const;
+        [[nodiscard]] std::string ToString() const;
+
+        Token(Token&& other) noexcept :
+            identName(std::move(other.identName)),
+            lineNumber(other.lineNumber),
+            type(other.type),
+            literalValue(std::move(other.literalValue))
+        { }
+
+        Token(const Token& other) :
+            identName(other.identName),
+            lineNumber(other.lineNumber),
+            type(other.type),
+            literalValue(other.literalValue)
+        { }
+
+        Token() = default;
+
+        [[nodiscard]] bool Check(TokenType t) const;
+
+        [[nodiscard]] bool Check(std::initializer_list<TokenType> types) const;
+
+        [[nodiscard]] bool IsLiteral() const;
     };
 }

@@ -2,13 +2,11 @@
 #include <fmt/core.h>
 
 int main() {
-    auto testSrc = R"(
-    func main() void {
-        return 0.0;
-        return "aaa";
-    }
+    const auto testSrc = R"(
+        *(alpha + 1)(1, 2 + 3)[1, 2];
     )";
-    
+
     auto parser = pl::SourceParser::FromString(testSrc);
     auto statements = parser.Parse();
+
 }

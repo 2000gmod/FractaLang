@@ -9,6 +9,36 @@
 
 using namespace pl;
 
+SourceParser::SourceParser() {
+    prefixParsers = {
+        {TokenType::IntLiteral, MakeSP<LiteralParser>()},
+        {TokenType::DoubleLiteral, MakeSP<LiteralParser>()},
+        {TokenType::StringLiteral, MakeSP<LiteralParser>()},
+        {TokenType::Identifier, MakeSP<IdentifierParser>()},
+        {TokenType::OpenParen, MakeSP<GroupingParser>()},
+
+        {TokenType::Plus, MakeSP<PrefixOperatorParser>(30)},
+        {TokenType::Minus, MakeSP<PrefixOperatorParser>(30)},
+        {TokenType::Star, MakeSP<PrefixOperatorParser>(40)},
+    };
+
+    infixParsers = {
+        {TokenType::Plus, MakeSP<BinaryOperatorParser>(10, 11)},
+        {TokenType::Minus, MakeSP<BinaryOperatorParser>(10, 11)},
+        {TokenType::Star, MakeSP<BinaryOperatorParser>(20, 21)},
+        {TokenType::Slash, MakeSP<BinaryOperatorParser>(20, 21)},
+        {TokenType::Mod, MakeSP<BinaryOperatorParser>(20, 21)},
+    };
+
+    postfixParsers = {
+        {TokenType::OpenParen, MakeSP<CallParser>(50)},
+        {TokenType::OpenSquare, MakeSP<IndexParser>(50)},
+    };
+}
+
+SourceParser::~SourceParser() = default;
+
+
 SourceParser SourceParser::FromString(std::string_view str) {
     auto scanner = Scanner::FromString(str);
     return SourceParser::FromScanner(scanner);
@@ -70,6 +100,13 @@ bool SourceParser::Check(TokenType type) {
     return type == Peek().type;
 }
 
+bool SourceParser::Check(const std::initializer_list<TokenType>& types) {
+    for (auto t : types) {
+        if (Check(t)) return true;
+    }
+    return false;
+}
+
 bool SourceParser::Match(TokenType type) {
     if (Check(type)) {
         Advance();
@@ -89,7 +126,7 @@ SourceParser::ParseError SourceParser::Error(Token& tok, std::string_view msg) {
     auto tokenName = magic_enum::enum_name(tok.type);
     auto message = fmt::format("Fatal parsing error at line {}, token: ({}): \n{}", tok.lineNumber, tokenName, msg);
 
-    return { message };
+    return ParseError(message);
 }
 
 TypeSP SourceParser::TypeExpr() {
@@ -107,7 +144,7 @@ StmtSP SourceParser::Statement() {
     if (Match(TokenType::KwReturn)) return SReturn();
     if (Match(TokenType::OpenBracket)) return SBlock();
 
-    return nullptr;
+    return SExpr();
 }
 
 StmtSP SourceParser::SFunctionDecl() {
@@ -147,7 +184,7 @@ StmtSP SourceParser::SReturn() {
 
     if (Match(TokenType::SemiColon)) value = nullptr;
     else {
-        value = Expression();
+        value = ParseExpression();
         Consume(TokenType::SemiColon, "Expected semicolon.");
     }
 
@@ -163,15 +200,115 @@ StmtSP SourceParser::SBlock() {
     return MakeSP<BlockStmt>(body);
 }
 
-ExprSP SourceParser::Expression() {
-    return ExLiteral();
+StmtSP SourceParser::SExpr() {
+    auto out = MakeSP<ExprStmt>(ParseExpression());
+    Consume(TokenType::SemiColon, "Expected semicolon after expression.");
+    return out;
 }
 
-ExprSP SourceParser::ExLiteral() {
-    if (Match({TokenType::IntLiteral, TokenType::DoubleLiteral, TokenType::StringLiteral})) {
-        auto value = Previous();
-        return MakeSP<LiteralExpr>(value);
-    }
 
-    throw Error(Peek(), "Unexpected token.");
+struct InfixPrecedence {
+    const float lbp, rbp;
+};
+
+struct PrecedenceTableEntry {
+    const std::optional<InfixPrecedence> infix;
+    const std::optional<float> prefix;
+    const std::optional<float> postfix;
+};
+
+const std::unordered_map<TokenType, PrecedenceTableEntry> PrecedenceTable {
+    {
+        TokenType::Plus, {
+            .infix = {{10, 11}},
+            .prefix = {30},
+            .postfix = {}
+        }
+    },
+    {
+        TokenType::Minus, {
+            .infix = {{10, 11}},
+            .prefix = {30},
+            .postfix = {}
+        }
+    },
+    {
+        TokenType::Star, {
+            .infix = {{20, 21}},
+            .prefix = {30},
+            .postfix = {}
+        }
+    },
+    {
+        TokenType::Slash, {
+            .infix = {{20, 21}},
+            .prefix = {},
+            .postfix = {}
+        }
+    },
+    {
+        TokenType::Mod, {
+            .infix = {{20, 21}},
+            .prefix = {},
+            .postfix = {}
+        }
+    },
+
+    {
+        TokenType::OpenParen, {
+            .infix = {},
+            .prefix = {40},
+            .postfix = {40}
+        }
+    },
+
+    {
+        TokenType::OpenSquare, {
+            .infix = {},
+            .prefix = {},
+            .postfix = {40}
+        }
+    }
+};
+
+std::optional<PrecedenceTableEntry> GetPrecedence(const TokenType type) {
+    if (PrecedenceTable.contains(type)) {
+        return PrecedenceTable.at(type);
+    }
+    return std::nullopt;
+}
+
+ExprSP SourceParser::ParseExpression(float minBp) {
+    auto tok = Advance();
+
+    if (!prefixParsers.contains(tok.type)) {
+        throw Error(Peek(), "Invalid token.");
+    }
+    auto prefix = prefixParsers.at(tok.type);
+
+    auto left = prefix->Parse(*this, tok);
+
+    while (true) {
+        auto nextTok = Peek();
+
+        std::shared_ptr<PostfixParser> postfix;
+        if (postfixParsers.contains(nextTok.type)) postfix = postfixParsers.at(nextTok.type);
+
+        if (postfix && postfix->Precedence() >= minBp) {
+            auto tok2 = Advance();
+            left = postfix->Parse(*this, left, tok2);
+            continue;
+        }
+
+        std::shared_ptr<InfixParser> infix;
+        if (infixParsers.contains(nextTok.type)) infix = infixParsers.at(nextTok.type);
+
+        if (infix && infix->Lbp() >= minBp) {
+            auto tok2 = Advance();
+            left = infix->Parse(*this, left, tok2);
+            continue;
+        }
+        break;
+    }
+    return left;
 }

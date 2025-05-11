@@ -19,11 +19,11 @@ namespace pl {
             ~Scanner() = default;
             static Scanner FromFile(const std::filesystem::path& filepath);
             static Scanner FromString(std::string_view str);
-            bool IsOpen() const { return handleValid; }
+            [[nodiscard]] bool IsOpen() const { return handleValid; }
 
         private:
             explicit Scanner(const std::filesystem::path& filepath);
-            explicit Scanner(const std::string_view str);
+            explicit Scanner(std::string_view str);
 
             char Advance();
             char Peek();

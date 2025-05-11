@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <ranges>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -56,10 +57,10 @@ static const std::unordered_map<std::string, TokenType> Punctuations = {
 static std::vector<std::string> SortedPunctuations = [] {
     std::vector<std::string> keys;
 
-    for (const auto& [key, val] : Punctuations) {
+    for (const auto &key: Punctuations | std::views::keys) {
         keys.push_back(key);
     }
-    std::sort(keys.begin(), keys.end());
+    std::ranges::sort(keys);
     return keys;
 }();
 
@@ -73,9 +74,9 @@ enum class MatchResult : uint8_t {
 static MatchResult MatchPunctuation(const std::string& str) {
     using enum MatchResult;
 
-    auto it = std::lower_bound(SortedPunctuations.begin(), SortedPunctuations.end(), str);
+    const auto it = std::ranges::lower_bound(SortedPunctuations, str);
 
-    bool exactMatch = (it != SortedPunctuations.end() && *it == str);
+    const bool exactMatch = (it != SortedPunctuations.end() && *it == str);
     bool isPrefix = false;
 
     for (const auto& token : SortedPunctuations) {
@@ -308,7 +309,6 @@ void Scanner::ScanKeywordOrIdentifier(Token& out, char initial) {
     
     out.type = TokenType::Identifier;
     out.identName = proc;
-    return;
 }
 
 void Scanner::ScanNumberLiteral(Token& out, char initial) {
@@ -337,9 +337,7 @@ void Scanner::ScanNumberLiteral(Token& out, char initial) {
     catch (std::out_of_range&) {
         out.type = TokenType::Error;
         ScannerError(fmt::format("(at line {}) Integer literal out of max range: ({})", currentLine, proc));
-        return;
     }
-    return;
 }
 
 void Scanner::ScanStringLiteral(Token& out) {

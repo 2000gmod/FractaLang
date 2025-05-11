@@ -5,18 +5,25 @@
 #include "Type.hpp"
 #include "Expression.hpp"
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace pl {
     struct StmtBase : public ASTNode {
-        virtual ~StmtBase() = 0;
+        ~StmtBase() override = 0;
     };
 
-    inline StmtBase::~StmtBase() { }
+    inline StmtBase::~StmtBase() = default;
 
     using StmtSP = std::shared_ptr<StmtBase>;
 
-    struct FuncDeclStmt : public StmtBase {
+    struct ExprStmt : public StmtBase {
+        ExprSP expr;
+
+        explicit ExprStmt(ExprSP expr) : expr(std::move(expr)) { }
+    };
+
+    struct FuncDeclStmt final : public StmtBase {
         struct ArgPair {
             TypeSP type;
             Token name;
@@ -28,24 +35,24 @@ namespace pl {
         TypeSP returnType;
         StmtSP body;
 
-        FuncDeclStmt(const Token& name, const ArgList& args, const TypeSP& rType, const StmtSP& body) 
-            : name(name),
-            args(args),
-            returnType(rType),
-            body(body)
+        FuncDeclStmt(Token name, ArgList args, TypeSP rType, StmtSP body)
+            : name(std::move(name)),
+            args(std::move(args)),
+            returnType(std::move(rType)),
+            body(std::move(body))
             { }
     };
 
-    struct ReturnStmt : public StmtBase {
+    struct ReturnStmt final : public StmtBase {
         ExprSP value;
 
-        ReturnStmt(const ExprSP& value) : value(value) { }
+        explicit ReturnStmt(ExprSP  value) : value(std::move(value)) { }
     };
 
 
-    struct BlockStmt : public StmtBase {
+    struct BlockStmt final : public StmtBase {
         std::vector<StmtSP> body;
 
-        BlockStmt(const std::vector<StmtSP>& body) : body(body) { }
+        explicit BlockStmt(std::vector<StmtSP> body) : body(std::move(body)) { }
     };
 }

@@ -37,6 +37,7 @@ set(ParsingSources
     src/Parsing/Scanner.cpp
     src/Parsing/Token.cpp
     src/Parsing/Parser.cpp
+        src/Parsing/Parselets.cpp
 )
 
 

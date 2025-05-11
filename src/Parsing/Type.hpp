@@ -3,21 +3,22 @@
 #include "ASTNode.hpp"
 #include "Token.hpp"
 #include <memory>
+#include <utility>
 
 
 namespace pl {
     struct TypeBase : public ASTNode {
-        virtual ~TypeBase() = 0;
+        ~TypeBase() override = 0;
     };
 
-    inline TypeBase::~TypeBase() { }
+    inline TypeBase::~TypeBase() = default;
 
     using TypeSP = std::shared_ptr<TypeBase>;
 
-    struct NamedType : public TypeBase {
+    struct NamedType final : public TypeBase {
         Token name;
 
-        NamedType(const Token& name) : name(name) { }
+        explicit NamedType(Token name) : name(std::move(name)) { }
     };
 
     using NamedTypeSP = std::shared_ptr<NamedType>;
