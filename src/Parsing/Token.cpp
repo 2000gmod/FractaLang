@@ -5,9 +5,6 @@
 std::string pl::Token::ToString() const {
     auto tname = magic_enum::enum_name(type);
 
-    if (tname.starts_with("Kw")) {
-        return fmt::format("{}", tname);
-    }
     if (tname.ends_with("Literal")) {
         const auto litType = tname.substr(0, tname.size() - 7);
 

@@ -108,7 +108,12 @@ void pl::TestPunctuation() {
 }
 
 void Scanner::ScannerError(std::string_view msg) {
-    ReportError(fmt::format("[Scanner error] {}", msg));
+    //ReportError(fmt::format("[Scanner error] {}", msg));
+    errors.emplace_back(
+        "test",
+        std::string(msg),
+        currentLine
+    );
 }
 
 static bool IsAlpha(char c) {
@@ -133,8 +138,8 @@ Scanner Scanner::FromFile(const std::filesystem::path &filepath) {
     return Scanner(filepath);
 }
 
-Scanner Scanner::FromString(std::string_view str) {
-    return Scanner(str);
+Scanner Scanner::FromString(std::string_view str, std::string_view filename) {
+    return Scanner(str, filename);
 }
 
 Scanner::Scanner(const std::filesystem::path& filepath) {
@@ -143,10 +148,11 @@ Scanner::Scanner(const std::filesystem::path& filepath) {
         auto ptr = std::make_shared<std::ifstream>();
         ptr->open(filepath.string());
         inputStream = ptr;
+        filename = filepath.filename();
     }
 }
 
-Scanner::Scanner(std::string_view str) {
+Scanner::Scanner(std::string_view str, std::string_view filename) {
     handleValid = !str.empty();
 
     if (handleValid) {
@@ -154,17 +160,20 @@ Scanner::Scanner(std::string_view str) {
         ptr->str(std::string(str));
         inputStream = ptr;
     }
+    this->filename = filename;
 }
 
 Token Scanner::GetToken() {
     Token out;
 
-    if (!handleValid) {
+    if (!handleValid || !errors.empty()) {
         out.type = TokenType::Error;
+        out.lineNumber = currentLine;
     }
     else if (inputStream->eof()) {
         handleValid = false;
         out.type = TokenType::EoF;
+        out.lineNumber = currentLine;
     }
     else {
         ScanToken(out);
@@ -208,6 +217,7 @@ void Scanner::ScanToken(Token& out) {
     char c = Advance();
     if (inputStream->eof()) {
         out.type = TokenType::EoF;
+        out.lineNumber = currentLine;
         return;
     }
 
@@ -237,6 +247,7 @@ void Scanner::ScanToken(Token& out) {
 
     if (inputStream->eof()) {
         out.type = TokenType::EoF;
+        out.lineNumber = currentLine;
         return;
     }
 

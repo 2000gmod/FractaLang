@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ASTNode.hpp"
+#include "Common/ErrorInfo.hpp"
 #include "Expression.hpp"
 #include "Scanner.hpp"
 #include "Statement.hpp"
@@ -20,14 +21,12 @@ namespace pl {
 
     class SourceParser {
         private:
-            struct ParseError final : std::exception {
-                std::string msg;
-                explicit ParseError(std::string msg) : msg(std::move(msg)) { }
-            };
+            struct ParseError final : std::exception { };
 
             std::vector<Token> tokens;
             int current = 0;
             std::string filename;
+            std::vector<ErrorInfo> errors;
 
             SourceParser();
         public:
@@ -40,6 +39,9 @@ namespace pl {
 
             FileSourceNodeSP Parse();
 
+            [[nodiscard]] bool HadErrors() const { return !errors.empty(); }
+            [[nodiscard]] const std::vector<ErrorInfo>& GetErrors() const { return errors; }
+
         private:
             bool IsAtEnd();
             Token& Peek();
@@ -51,7 +53,7 @@ namespace pl {
             bool Match(TokenType type);
             bool Match(const std::initializer_list<TokenType>& types);
 
-            static ParseError Error(Token& tok, std::string_view msg);
+            ParseError Error(Token& tok, std::string_view msg);
 
             TypeSP TypeExpr();
             TypeSP TNamed();

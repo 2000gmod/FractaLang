@@ -42,7 +42,7 @@ SourceParser::~SourceParser() = default;
 
 
 SourceParser SourceParser::FromString(std::string_view str, std::string_view filename) {
-    auto scanner = Scanner::FromString(str);
+    auto scanner = Scanner::FromString(str, filename);
     return SourceParser::FromScanner(scanner, filename);
 }
 
@@ -62,10 +62,15 @@ SourceParser SourceParser::FromScanner(Scanner& scanner, std::string_view filena
         return parser;
     }
 
-    while (scanner.IsOpen()) {
+    while (scanner.IsValid()) {
         auto tok = scanner.GetToken();
         parser.tokens.push_back(tok);
     }
+
+    if (scanner.HadErrors()) {
+        ReportErrors(scanner.GetErrors());
+    }
+
     return parser;
 }
 
@@ -76,16 +81,17 @@ FileSourceNodeSP SourceParser::Parse() {
             statements.push_back(Statement());
         }
         catch (ParseError& err) {
-            ReportError(err.msg);
+            //ReportError(err.msg);
+            continue;
         }
     }
+
     auto filenode = MakeSP<FileSourceNode>(filename, statements);
     return filenode;
 }
 
 bool SourceParser::IsAtEnd() {
     return Peek().type == TokenType::EoF;
-    
 }
 
 Token& SourceParser::Peek() {
@@ -135,9 +141,14 @@ bool SourceParser::Match(const std::initializer_list<TokenType>& types) {
 
 SourceParser::ParseError SourceParser::Error(Token& tok, std::string_view msg) {
     auto tokenName = magic_enum::enum_name(tok.type);
-    auto message = fmt::format("Fatal parsing error at line {}, token: ({}): \n{}", tok.lineNumber, tokenName, msg);
 
-    return ParseError(message);
+    errors.push_back({
+        filename,
+        fmt::format("(token {}) {}", tokenName, msg),
+        tok.lineNumber
+    });
+
+    return ParseError();
 }
 
 TypeSP SourceParser::TypeExpr() {
@@ -230,7 +241,7 @@ ExprSP SourceParser::ParseExpression(float minBp) {
     auto tok = Advance();
 
     if (!prefixParsers.contains(tok.type)) {
-        throw Error(Peek(), "Invalid token.");
+        throw Error(Peek(), "Invalid token for expression.");
     }
     auto prefix = prefixParsers.at(tok.type);
 

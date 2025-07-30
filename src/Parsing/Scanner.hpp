@@ -16,16 +16,20 @@ namespace pl {
             std::shared_ptr<std::istream> inputStream;
             int currentLine = 0;
             std::vector<ErrorInfo> errors;
+            std::string filename;
         
         public:
             ~Scanner() = default;
             static Scanner FromFile(const std::filesystem::path& filepath);
-            static Scanner FromString(std::string_view str);
+            static Scanner FromString(std::string_view str, std::string_view filename);
             [[nodiscard]] bool IsOpen() const { return handleValid; }
+            [[nodiscard]] bool HadErrors() const { return !errors.empty(); }
+            [[nodiscard]] bool IsValid() const { return IsOpen() && !HadErrors(); }
+            [[nodiscard]] const std::vector<ErrorInfo>& GetErrors() const { return errors; }
 
         private:
             explicit Scanner(const std::filesystem::path& filepath);
-            explicit Scanner(std::string_view str);
+            explicit Scanner(std::string_view str, std::string_view filename);
 
             void ScannerError(std::string_view msg);
 
