@@ -1,13 +1,13 @@
 #include "Parser.hpp"
-#include "../Utils/Utils.hpp"
+#include <Utils/Utils.hpp>
 
 using namespace pl;
 
-ExprSP SourceParser::LiteralParser::Parse(SourceParser& src, Token tok) const {
+ExprSP SourceParser::LiteralParser::Parse(SourceParser&, Token tok) const {
     return MakeSP<LiteralExpr>(tok);
 }
 
-ExprSP SourceParser::IdentifierParser::Parse(SourceParser& src, Token tok) const {
+ExprSP SourceParser::IdentifierParser::Parse(SourceParser&, Token tok) const {
     return MakeSP<IdentifierExpr>(tok);
 }
 
@@ -35,7 +35,7 @@ float SourceParser::BinaryOperatorParser::Lbp() const {
     return lbp;
 }
 
-ExprSP SourceParser::PostfixOperatorParser::Parse(SourceParser& src, ExprSP left, Token tok) const {
+ExprSP SourceParser::PostfixOperatorParser::Parse(SourceParser&, ExprSP left, Token tok) const {
     return MakeSP<UnaryExpr>(tok, left);
 }
 
@@ -43,7 +43,7 @@ float SourceParser::PostfixOperatorParser::Precedence() const {
     return precedence;
 }
 
-ExprSP SourceParser::CallParser::Parse(SourceParser& src, ExprSP left, Token tok) const {
+ExprSP SourceParser::CallParser::Parse(SourceParser& src, ExprSP left, Token) const {
     std::vector<ExprSP> args;
 
     if (!src.Check(TokenType::CloseParen)) {
@@ -61,7 +61,7 @@ float SourceParser::CallParser::Precedence() const {
     return precedence;
 }
 
-ExprSP SourceParser::IndexParser::Parse(SourceParser& src, ExprSP left, Token tok) const {
+ExprSP SourceParser::IndexParser::Parse(SourceParser& src, ExprSP left, Token) const {
     std::vector<ExprSP> args;
 
     if (!src.Check(TokenType::CloseSquare)) {

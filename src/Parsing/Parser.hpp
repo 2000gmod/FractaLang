@@ -27,15 +27,16 @@ namespace pl {
 
             std::vector<Token> tokens;
             int current = 0;
+            std::string filename;
 
             SourceParser();
         public:
 
             ~SourceParser();
-            static SourceParser FromString(std::string_view str);
+            static SourceParser FromString(std::string_view str, std::string_view filename);
             static SourceParser FromFile(const std::filesystem::path& path);
 
-            static SourceParser FromScanner(Scanner& scanner);
+            static SourceParser FromScanner(Scanner& scanner, std::string_view filename);
 
             FileSourceNodeSP Parse();
 
@@ -87,8 +88,7 @@ namespace pl {
                 [[nodiscard]] virtual float Precedence() const { return 0.0f; }
             };
 
-
-
+            
             struct LiteralParser final : public PrefixParser {
                 [[nodiscard]] ExprSP Parse(SourceParser&, Token) const override;
             };

@@ -4,5 +4,5 @@
 
 void pl::ReportError(const std::string_view msg, int code) {
     fmt::print(fmt::fg(fmt::color::red), "{}\n", msg);
-    std::exit(1);
+    std::exit(code);
 }

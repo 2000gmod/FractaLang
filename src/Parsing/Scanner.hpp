@@ -1,4 +1,6 @@
 #pragma once
+#include "Common/ErrorInfo.hpp"
+#include <vector>
 #include "Token.hpp"
 #include <filesystem>
 #include <istream>
@@ -8,13 +10,13 @@
 namespace pl {
     void TestPunctuation();
 
-    void ScannerError(std::string_view msg);
-
     class Scanner {
         private:
             bool handleValid = false;
             std::shared_ptr<std::istream> inputStream;
             int currentLine = 0;
+            std::vector<ErrorInfo> errors;
+        
         public:
             ~Scanner() = default;
             static Scanner FromFile(const std::filesystem::path& filepath);
@@ -24,6 +26,8 @@ namespace pl {
         private:
             explicit Scanner(const std::filesystem::path& filepath);
             explicit Scanner(std::string_view str);
+
+            void ScannerError(std::string_view msg);
 
             char Advance();
             char Peek();

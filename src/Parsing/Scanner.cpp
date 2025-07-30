@@ -2,7 +2,7 @@
 #include "Token.hpp"
 #include "fmt/core.h"
 #include "magic_enum/magic_enum.hpp"
-#include "../Utils/Utils.hpp"
+#include <Utils/Utils.hpp>
 
 #include <algorithm>
 #include <cstdint>
@@ -107,7 +107,7 @@ void pl::TestPunctuation() {
     }
 }
 
-void pl::ScannerError(std::string_view msg) {
+void Scanner::ScannerError(std::string_view msg) {
     ReportError(fmt::format("[Scanner error] {}", msg));
 }
 
@@ -221,6 +221,7 @@ void Scanner::ScanToken(Token& out) {
                     continue;
                 case '\n':
                     currentLine++;
+                    [[fallthrough]];
                 case ' ':
                 case '\t':
                 case '\r':

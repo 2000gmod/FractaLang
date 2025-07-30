@@ -11,6 +11,7 @@
 namespace pl {
     struct StmtBase : public ASTNode {
         ~StmtBase() override = 0;
+        int line = 0;
     };
 
     inline StmtBase::~StmtBase() = default;
@@ -43,16 +44,21 @@ namespace pl {
             { }
     };
 
+    typedef std::shared_ptr<FuncDeclStmt> FuncDeclStmtSP;
+
     struct ReturnStmt final : public StmtBase {
         ExprSP value;
 
         explicit ReturnStmt(ExprSP  value) : value(std::move(value)) { }
     };
 
+    typedef std::shared_ptr<ReturnStmt> ReturnStmtSP;
 
     struct BlockStmt final : public StmtBase {
         std::vector<StmtSP> body;
 
         explicit BlockStmt(std::vector<StmtSP> body) : body(std::move(body)) { }
     };
+
+    typedef std::shared_ptr<BlockStmt> BlockStmtSP;
 }

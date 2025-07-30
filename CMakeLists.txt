@@ -37,7 +37,12 @@ set(ParsingSources
     src/Parsing/Scanner.cpp
     src/Parsing/Token.cpp
     src/Parsing/Parser.cpp
-        src/Parsing/Parselets.cpp
+    src/Parsing/Parselets.cpp
+)
+
+set(AnalysisSources
+    src/Analysis/SemanticAnalysis.cpp
+    src/Analysis/SymbolTable.cpp
 )
 
 
@@ -45,7 +50,12 @@ set(SOURCES
     src/Main.cpp
     ${ParsingSources}
     ${UtilsSources}
+    ${AnalysisSources}
 )
+
+add_compile_options(-Wall -Wextra -pedantic -Werror)
+#add_compile_options(-fsanitize=address)
+#add_link_options(-fsanitize=address)
 
 
 add_executable(fractac ${SOURCES})
@@ -54,6 +64,8 @@ llvm_map_components_to_libnames(LLVM_LIBS
     core
     support
 )
+
+target_include_directories(fractac PRIVATE src)
 
 target_link_libraries(fractac PRIVATE ${LLVM_LIBS})
 target_link_libraries(fractac PRIVATE fmt::fmt)

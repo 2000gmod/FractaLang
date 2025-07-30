@@ -1,12 +1,13 @@
 #include "Parser.hpp"
 #include "ASTNode.hpp"
 #include "Expression.hpp"
+#include "Scanner.hpp"
 #include "Statement.hpp"
 #include "Token.hpp"
 #include "Type.hpp"
 #include "fmt/core.h"
 #include "magic_enum/magic_enum.hpp"
-#include "../Utils/Utils.hpp"
+#include <Utils/Utils.hpp>
 
 using namespace pl;
 
@@ -40,18 +41,27 @@ SourceParser::SourceParser() {
 SourceParser::~SourceParser() = default;
 
 
-SourceParser SourceParser::FromString(std::string_view str) {
+SourceParser SourceParser::FromString(std::string_view str, std::string_view filename) {
     auto scanner = Scanner::FromString(str);
-    return SourceParser::FromScanner(scanner);
+    return SourceParser::FromScanner(scanner, filename);
 }
 
 SourceParser SourceParser::FromFile(const std::filesystem::path &path) {
     auto scanner = Scanner::FromFile(path);
-    return SourceParser::FromScanner(scanner);
+    return SourceParser::FromScanner(scanner, path.filename().string());
 }
 
-SourceParser SourceParser::FromScanner(Scanner& scanner) {
+SourceParser SourceParser::FromScanner(Scanner& scanner, std::string_view filename) {
     SourceParser parser;
+    parser.filename = filename;
+
+    if (!scanner.IsOpen()) {
+        Token tok;
+        tok.type = TokenType::EoF;
+        parser.tokens.push_back(tok);
+        return parser;
+    }
+
     while (scanner.IsOpen()) {
         auto tok = scanner.GetToken();
         parser.tokens.push_back(tok);
@@ -69,7 +79,7 @@ FileSourceNodeSP SourceParser::Parse() {
             ReportError(err.msg);
         }
     }
-    auto filenode = MakeSP<FileSourceNode>(statements);
+    auto filenode = MakeSP<FileSourceNode>(filename, statements);
     return filenode;
 }
 
@@ -149,6 +159,7 @@ StmtSP SourceParser::Statement() {
 }
 
 StmtSP SourceParser::SFunctionDecl() {
+    int line = Previous().lineNumber;
     auto name = Consume(TokenType::Identifier, "Expected identifier.");
     Consume(TokenType::OpenParen, "Expected '(' after function identifier.");
 
@@ -177,10 +188,13 @@ StmtSP SourceParser::SFunctionDecl() {
         throw Error(Peek(), "Invalid token.");
     }
 
-    return MakeSP<FuncDeclStmt>(name, args, rtype, body);
+    auto out = MakeSP<FuncDeclStmt>(name, args, rtype, body);
+    out->line = line;
+    return out;
 }
 
 StmtSP SourceParser::SReturn() {
+    int line = Previous().lineNumber;
     ExprSP value;
 
     if (Match(TokenType::SemiColon)) value = nullptr;
@@ -189,16 +203,21 @@ StmtSP SourceParser::SReturn() {
         Consume(TokenType::SemiColon, "Expected semicolon.");
     }
 
-    return MakeSP<ReturnStmt>(value);
+    auto out = MakeSP<ReturnStmt>(value);
+    out->line = line;
+    return out;
 }
 
 StmtSP SourceParser::SBlock() {
+    int line = Previous().lineNumber;
     SList body;
     while (!Check(TokenType::CloseBracket)) {
         body.push_back(Statement());
     }
     Consume(TokenType::CloseBracket, "Expected '}' after a block statement.");
-    return MakeSP<BlockStmt>(body);
+    auto out = MakeSP<BlockStmt>(body);
+    out->line = line;
+    return out;
 }
 
 StmtSP SourceParser::SExpr() {

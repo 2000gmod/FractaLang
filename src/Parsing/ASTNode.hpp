@@ -13,9 +13,13 @@ namespace pl {
     struct StmtBase;
 
     struct FileSourceNode : public ASTNode {
+        std::string filename;
         std::vector<std::shared_ptr<StmtBase>> statements;
 
-        FileSourceNode(std::vector<std::shared_ptr<StmtBase>> statements) : statements(std::move(statements)) { }
+        FileSourceNode(const std::string& filename, std::vector<std::shared_ptr<StmtBase>> statements)
+            : filename(filename), 
+              statements(std::move(statements)) 
+            { }
     };
 
     using FileSourceNodeSP = std::shared_ptr<FileSourceNode>;

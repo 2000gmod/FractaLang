@@ -13,6 +13,7 @@ namespace pl {
     struct ExprBase : public ASTNode {
         ~ExprBase() override = 0;
         TypeSP exprType;
+        int line = 0;
     };
 
     inline ExprBase::~ExprBase() = default;
