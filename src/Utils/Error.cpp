@@ -16,7 +16,7 @@ void pl::ReportErrors(std::string_view header, const std::vector<ErrorInfo>& err
     if (errors.empty()) return;
     if (!header.empty()) fmt::print(fmt::emphasis::bold, "{}\n", header);
     for (const auto& error : errors) {
-        fmt::print(fmt::fg(fmt::color::red), "Error [at {}, line {}]:\n\t{}\n", error.filename, error.line, error.msg);
+        fmt::print(fmt::fg(fmt::color::red), "Error [at {}, line {}]:\n\t{}\n", error.context, error.line, error.msg);
     }
 
     if (terminate) std::exit(1);

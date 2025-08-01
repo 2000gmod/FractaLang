@@ -24,6 +24,8 @@ namespace pl {
         explicit ExprStmt(ExprSP expr) : expr(std::move(expr)) { }
     };
 
+    typedef std::shared_ptr<ExprStmt> ExprStmtSP;
+
     struct FuncDeclStmt final : public StmtBase {
         struct ArgPair {
             TypeSP type;

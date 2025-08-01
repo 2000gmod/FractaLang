@@ -78,7 +78,8 @@ FileSourceNodeSP SourceParser::Parse() {
     SList statements;
     while (!IsAtEnd()) {
         try {
-            statements.push_back(Statement());
+            auto stmt = Statement();
+            if (stmt) statements.push_back(stmt);
         }
         catch (ParseError& err) {
             //ReportError(err.msg);
@@ -162,11 +163,16 @@ TypeSP SourceParser::TNamed() {
 }
 
 StmtSP SourceParser::Statement() {
-    if (Match(TokenType::KwFunc)) return SFunctionDecl();
-    if (Match(TokenType::KwReturn)) return SReturn();
-    if (Match(TokenType::OpenBracket)) return SBlock();
+    try {
+        if (Match(TokenType::KwFunc)) return SFunctionDecl();
+        if (Match(TokenType::KwReturn)) return SReturn();
+        if (Match(TokenType::OpenBracket)) return SBlock();
 
-    return SExpr();
+        return SExpr();
+    }
+    catch (ParseError&) {
+        return nullptr;
+    }
 }
 
 StmtSP SourceParser::SFunctionDecl() {
